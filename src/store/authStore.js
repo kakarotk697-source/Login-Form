@@ -31,6 +31,19 @@ const useAuthStore = create((set, get) => ({
     return { success: true }
   },
 
+  updateProfilePicture: (avatarDataUrl) => {
+    const { user, users } = get()
+    if (!user) return
+
+    const updatedUser = { ...user, avatar: avatarDataUrl }
+    const updatedUsers = users.map(u => u.email === user.email ? updatedUser : u)
+
+    localStorage.setItem('current_session_user', JSON.stringify(updatedUser))
+    localStorage.setItem('registered_users', JSON.stringify(updatedUsers))
+
+    set({ user: updatedUser, users: updatedUsers })
+  },
+
   logout: () => {
     localStorage.removeItem('current_session_user')
     set({ user: null })

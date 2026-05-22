@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import useAuthStore from '../store/authStore'
+import AvatarPicker from '../components/AvatarPicker'
 
 function Signup() {
   const navigate = useNavigate()
   const { signup } = useAuthStore()
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' })
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', avatar: null })
   const [error, setError] = useState('')
 
   const handleSubmit = (e) => {
@@ -32,7 +33,7 @@ function Signup() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
-        className="bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8 w-full max-w-md border border-white"
+        className="bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8 w-full max-w-md border border-white my-8"
       >
         <h1 className="text-4xl font-bold text-center text-teal-800 mb-2 tracking-tight">
           Get Started
@@ -53,7 +54,7 @@ function Signup() {
             <input
               type="text"
               placeholder="Alex Mercer"
-              className="w-full p-3.5 rounded-xl bg-stone-50 border border-stone-200 outline-none focus:ring-2 focus:ring-teal-400 transition-all text-stone-800"
+              className="w-full p-3.5 rounded-xl bg-stone-50 border border-stone-200 outline-none focus:ring-2 focus:ring-teal-400 transition-all text-stone-800 text-sm"
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
@@ -63,7 +64,7 @@ function Signup() {
             <input
               type="email"
               placeholder="alex@example.com"
-              className="w-full p-3.5 rounded-xl bg-stone-50 border border-stone-200 outline-none focus:ring-2 focus:ring-teal-400 transition-all text-stone-800"
+              className="w-full p-3.5 rounded-xl bg-stone-50 border border-stone-200 outline-none focus:ring-2 focus:ring-teal-400 transition-all text-stone-800 text-sm"
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
@@ -73,17 +74,24 @@ function Signup() {
             <input
               type="password"
               placeholder="Choose a strong password"
-              className="w-full p-3.5 rounded-xl bg-stone-50 border border-stone-200 outline-none focus:ring-2 focus:ring-teal-400 transition-all text-stone-800"
+              className="w-full p-3.5 rounded-xl bg-stone-50 border border-stone-200 outline-none focus:ring-2 focus:ring-teal-400 transition-all text-stone-800 text-sm"
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
           </div>
 
-          <button
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase text-stone-500 ml-1">Profile Photo (Optional)</label>
+            <AvatarPicker onAvatarSelected={(base64Img) => setFormData({ ...formData, avatar: base64Img })} />
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
             type="submit"
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3.5 rounded-xl font-medium shadow-md shadow-teal-600/10 transition-all transform active:scale-[0.98] mt-2"
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3.5 rounded-xl font-medium shadow-md shadow-teal-600/10 transition-all mt-2 text-sm"
           >
             Create Account
-          </button>
+          </motion.button>
         </form>
 
         <p className="text-center mt-6 text-sm text-stone-600">

@@ -54,22 +54,25 @@ function Home() {
             </p>
           </div>
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.92 }}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden flex flex-col justify-center items-center w-10 h-10 bg-white shadow-sm border border-stone-200 rounded-xl gap-1.5 focus:outline-none z-50"
           >
             <span className={`h-0.5 w-5 bg-stone-600 rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
             <span className={`h-0.5 w-5 bg-stone-600 rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
             <span className={`h-0.5 w-5 bg-stone-600 rounded-full transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
-          </button>
+          </motion.button>
         </div>
 
-          <div className="hidden md:flex flex-wrap gap-2 mb-6 bg-white p-2 rounded-2xl border border-stone-100 shadow-xs">
+        <div className="hidden md:flex flex-wrap gap-2 mb-6 bg-white p-2 rounded-2xl border border-stone-100 shadow-xs">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat.id
             return (
-              <button
+              <motion.button
                 key={cat.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   isActive
@@ -82,12 +85,12 @@ function Home() {
                 <span className={`text-xs px-2 py-0.5 rounded-md font-bold ${isActive ? 'bg-emerald-700 text-emerald-100' : 'bg-stone-100 text-stone-500'}`}>
                   {getCategoryCount(cat.id)}
                 </span>
-              </button>
-              
+              </motion.button>
             )
           })}
         </div>
-            <AnimatePresence>
+
+        <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -99,8 +102,9 @@ function Home() {
               {categories.map((cat) => {
                 const isActive = selectedCategory === cat.id
                 return (
-                  <button
+                  <motion.button
                     key={cat.id}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       setSelectedCategory(cat.id)
                       setIsMobileMenuOpen(false) 
@@ -116,12 +120,13 @@ function Home() {
                     <span className="text-xs bg-stone-100 px-2 py-0.5 rounded-md text-stone-500 font-bold">
                       {getCategoryCount(cat.id)}
                     </span>
-                  </button>
+                  </motion.button>
                 )
               })}
             </motion.div>
           )}
         </AnimatePresence>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-xs">
             <p className="text-xs font-bold text-stone-400 uppercase tracking-wider">Total Tasks</p>
@@ -140,44 +145,6 @@ function Home() {
             <p className="text-2xl font-bold text-stone-700 mt-0.5">{pendingCount}</p>
           </div>
         </div>
-
-      
-
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden overflow-hidden bg-white rounded-2xl border border-stone-100 shadow-md p-3 mb-6 flex flex-col gap-1"
-            >
-              <p className="text-xs font-bold uppercase text-stone-400 px-3 py-1 tracking-wider">Lists & Folders</p>
-              {categories.map((cat) => {
-                const isActive = selectedCategory === cat.id
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setSelectedCategory(cat.id)
-                      setIsMobileMenuOpen(false) 
-                    }}
-                    className={`flex items-center justify-between p-3 rounded-xl text-sm font-semibold transition-all ${
-                      isActive ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-stone-600 hover:bg-stone-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span>{cat.icon}</span>
-                      <span>{cat.label}</span>
-                    </div>
-                    <span className="text-xs bg-stone-100 px-2 py-0.5 rounded-md text-stone-500 font-bold">
-                      {getCategoryCount(cat.id)}
-                    </span>
-                  </button>
-                )
-              })}
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <TaskForm currentCategory={selectedCategory === 'All' ? 'Work' : selectedCategory} />
 

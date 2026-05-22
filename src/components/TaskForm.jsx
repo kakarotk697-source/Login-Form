@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import useTaskStore from '../store/taskStore'
 import useAuthStore from '../store/authStore'
+import { motion } from 'framer-motion'
 
 function TaskForm({ currentCategory }) {
   const { addTask } = useTaskStore()
@@ -39,7 +40,6 @@ function TaskForm({ currentCategory }) {
         />
 
         <div className="grid grid-cols-2 lg:flex gap-2">
-          {/* Status Dropdown */}
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -64,9 +64,14 @@ function TaskForm({ currentCategory }) {
           </select>
         </div>
 
-        <button className="bg-emerald-600 hover:bg-emerald-700 font-semibold text-white px-6 py-3 rounded-xl transition-all text-sm shadow-sm whitespace-nowrap">
+        <motion.button 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          type="submit"
+          className="bg-emerald-600 hover:bg-emerald-700 font-semibold text-white px-6 py-3 rounded-xl transition-all text-sm shadow-sm whitespace-nowrap cursor-pointer"
+        >
           Add Task
-        </button>
+        </motion.button>
       </div>
     </form>
   )

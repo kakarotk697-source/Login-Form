@@ -14,7 +14,6 @@ function TaskItem({ task }) {
     }
   }
 
-  // Visual chips mapping for different status conditions
   const statusStyles = {
     'Complete': 'bg-emerald-50 text-emerald-700 border-emerald-200',
     'Partially Complete': 'bg-amber-50 text-amber-700 border-amber-200',
@@ -46,7 +45,6 @@ function TaskItem({ task }) {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Status Dropdown Picker */}
         <select
           value={task.status}
           onChange={(e) => updateTask(task.id, { status: e.target.value })}
@@ -57,7 +55,6 @@ function TaskItem({ task }) {
           <option value="Not Complete">Not Complete</option>
         </select>
 
-        {/* Action Controls */}
         {isEditing ? (
           <button onClick={handleSave} className="text-xs bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg font-medium">
             Save
