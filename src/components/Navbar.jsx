@@ -24,9 +24,9 @@ function Navbar() {
     navigate('/')
   }
 
-  const saveAvatarChange = () => {
+  const saveAvatarChange = async () => {
     if (tempAvatar) {
-      updateProfilePicture(tempAvatar)
+      await updateProfilePicture(tempAvatar)
     }
     setShowImgSection(false)
   }

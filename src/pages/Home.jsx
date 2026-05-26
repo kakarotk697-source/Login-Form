@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import useAuthStore from '../store/authStore'
 import useTaskStore from '../store/taskStore'
 import Navbar from '../components/Navbar'
@@ -21,9 +21,21 @@ const CATEGORIES = [
 function Home() {
   const user  = useAuthStore((s) => s.user)
   const tasks = useTaskStore((s) => s.tasks)
+  const fetchTasks = useTaskStore((s) => s.fetchTasks)
+  const isLoadingTasks = useTaskStore((s) => s.isLoading)
+  const isSavingTasks = useTaskStore((s) => s.isSaving)
+  const taskError = useTaskStore((s) => s.error)
 
   const [selectedCategory,  setSelectedCategory]  = useState('All')
   const [isMobileMenuOpen,  setIsMobileMenuOpen]  = useState(false)
+  const userId = user?.id
+  const userEmail = user?.email
+
+  useEffect(() => {
+    if (userId && userEmail) {
+      fetchTasks({ id: userId, email: userEmail })
+    }
+  }, [fetchTasks, userId, userEmail])
 
   const userTasks = useMemo(
     () => tasks.filter((t) => t.userId === user?.email),
@@ -72,6 +84,18 @@ function Home() {
             onMobileMenuToggle={toggleMobileMenu}
           />
         </div>
+
+        {(isLoadingTasks || isSavingTasks || taskError) && (
+          <div
+            className={`mb-5 rounded-xl border px-4 py-3 text-sm font-medium ${
+              taskError
+                ? 'border-amber-200 bg-amber-50 text-amber-700'
+                : 'border-emerald-100 bg-emerald-50 text-emerald-700'
+            }`}
+          >
+            {taskError || (isLoadingTasks ? 'Loading your synced tasks...' : 'Saving changes...')}
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

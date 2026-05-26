@@ -23,8 +23,8 @@ function TaskForm({ currentCategory }) {
     if (!task.trim()) return
 
     addTask({
-      id: Date.now(),
       userId: user?.email,
+      apiUserId: user?.id,
       title: task.trim(),
       status,
       category: currentCategory === 'All' || currentCategory === 'MyDay' ? category : currentCategory,
@@ -32,7 +32,7 @@ function TaskForm({ currentCategory }) {
 
     setTask('')
     setStatus('Not Complete')
-  }, [task, status, category, currentCategory, user?.email, addTask])
+  }, [task, status, category, currentCategory, user?.email, user?.id, addTask])
 
   const isAllView = currentCategory === 'All'
 

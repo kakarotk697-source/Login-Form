@@ -98,15 +98,15 @@ const CategoryModal = memo(function CategoryModal({ cat, tasks, onClose }) {
   const handleAdd = useCallback(() => {
     if (!newTitle.trim()) return
     addTask({
-      id: Date.now(),
       userId: user?.email,
+      apiUserId: user?.id,
       title: newTitle.trim(),
       status: newStatus,
       category: cat.id,
     })
     setNewTitle('')
     setNewStatus('Not Complete')
-  }, [newTitle, newStatus, cat.id, user?.email, addTask])
+  }, [newTitle, newStatus, cat.id, user?.email, user?.id, addTask])
 
   return (
     <motion.div

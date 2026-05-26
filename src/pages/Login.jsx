@@ -12,14 +12,15 @@ function Login() {
   const [errors, setErrors] = useState({ email: '', password: '', form: '' })
   
   const [touched, setTouched] = useState({ email: false, password: false })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const runClientSideValidation = (fieldName, fieldValue) => {
     let errorMessage = ''
 
     if (fieldName === 'email') {
       if (!fieldValue.trim()) {
-        errorMessage = 'Email address cannot be blank.'
-      } else {
+        errorMessage = 'Email or username cannot be blank.'
+      } else if (fieldValue.includes('@')) {
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!emailPattern.test(fieldValue)) {
           errorMessage = 'Please enter a valid format (e.g., name@domain.com).'
@@ -54,7 +55,7 @@ function Login() {
     runClientSideValidation(name, value)
   }
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault()
 
     setTouched({ email: true, password: true })
@@ -66,13 +67,16 @@ function Login() {
       return
     }
 
-    const isAuthorized = login(formData.email, formData.password)
-    if (isAuthorized) {
+    setIsSubmitting(true)
+    const result = await login(formData.email, formData.password)
+    setIsSubmitting(false)
+
+    if (result.success) {
       navigate('/home')
     } else {
       setErrors((prev) => ({
         ...prev,
-        form: 'The email or password you entered matches no registered records.',
+        form: result.message || 'The email/username or password you entered matches no registered records.',
       }))
     }
   }
@@ -109,13 +113,13 @@ function Login() {
           
           <div className="flex flex-col">
             <label className="text-xs font-bold uppercase text-stone-500 mb-1.5 ml-1 tracking-wider">
-              Email Address
+              Email or Username
             </label>
             <input
-              type="email"
+              type="text"
               name="email"
               value={formData.email}
-              placeholder="you@example.com"
+              placeholder="emily.johnson@x.dummyjson.com"
               onChange={handleInputChange}
               onBlur={handleInputBlur}
               className={`w-full p-3.5 rounded-xl bg-stone-50/50 border outline-none transition-all text-sm text-stone-800 ${
@@ -171,9 +175,10 @@ function Login() {
 
           <button
             type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-semibold shadow-sm transition-all transform active:scale-[0.99] mt-4 text-sm"
+            disabled={isSubmitting}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-semibold shadow-sm transition-all transform active:scale-[0.99] mt-4 text-sm disabled:opacity-70 disabled:cursor-wait"
           >
-            Sign In
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 

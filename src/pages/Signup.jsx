@@ -9,8 +9,9 @@ function Signup() {
   const { signup } = useAuthStore()
   const [formData, setFormData] = useState({ name: '', email: '', password: '', avatar: null })
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -19,7 +20,10 @@ function Signup() {
       return
     }
 
-    const result = signup(formData)
+    setIsSubmitting(true)
+    const result = await signup(formData)
+    setIsSubmitting(false)
+
     if (result.success) {
       navigate('/home')
     } else {
@@ -88,9 +92,10 @@ function Signup() {
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             type="submit"
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3.5 rounded-xl font-medium shadow-md shadow-teal-600/10 transition-all mt-2 text-sm"
+            disabled={isSubmitting}
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3.5 rounded-xl font-medium shadow-md shadow-teal-600/10 transition-all mt-2 text-sm disabled:opacity-70 disabled:cursor-wait"
           >
-            Create Account
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
           </motion.button>
         </form>
 
