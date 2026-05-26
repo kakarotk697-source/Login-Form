@@ -1,7 +1,10 @@
 import { create } from 'zustand'
 
+const stored = localStorage.getItem('app_tasks')
+const initialTasks = stored ? JSON.parse(stored) : []
+
 const useTaskStore = create((set) => ({
-  tasks: JSON.parse(localStorage.getItem('app_tasks')) || [],
+  tasks: initialTasks,
 
   addTask: (task) =>
     set((state) => {

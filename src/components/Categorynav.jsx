@@ -1,12 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion'
 
-const categories = [
-  { id: 'All', label: 'My Day', icon: '☀️' },
-  { id: 'Work', label: 'Work', icon: '👨‍💻' },
-  { id: 'Home', label: 'Home', icon: '🏠' },
-  { id: 'Groceries', label: 'Groceries', icon: '🍉' },
-  { id: 'Movies', label: 'Movies to watch', icon: '🍿' },
-  { id: 'Places', label: 'Places to eat', icon: '🍔' },
+const categories =  [
+  { id: 'All',       label: 'My Day',         icon: '☀️' },
+  { id: 'MyDay',     label: 'My Day Tasks',   icon: '🌤️' },
+  { id: 'Work',      label: 'Work',           icon: '👨‍💻' },
+  { id: 'Home',      label: 'Home',           icon: '🏠' },
+  { id: 'Groceries', label: 'Groceries',      icon: '🍉' },
+  { id: 'Movies',    label: 'Movies to watch',icon: '🍿' },
+  { id: 'Places',    label: 'Places to eat',  icon: '🍔' },
 ]
 
 
