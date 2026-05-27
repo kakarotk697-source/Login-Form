@@ -92,8 +92,21 @@ const CategoryModal = memo(function CategoryModal({ cat, tasks, onClose }) {
   const [newTitle,  setNewTitle]  = useState('')
   const [newStatus, setNewStatus] = useState('Not Complete')
 
-  const complete = tasks.filter((t) => t.status === 'Complete').length
-  const progress = tasks.length > 0 ? Math.round((complete / tasks.length) * 100) : 0
+ 
+  const complete = tasks.filter(
+  (t) => t.status === 'Complete'
+).length
+
+const partial = tasks.filter(
+  (t) => t.status === 'Partially Complete'
+).length
+
+const progress =
+  tasks.length > 0
+    ? Math.round(
+        ((complete + partial * 0.5) / tasks.length) * 100
+      )
+    : 0
 
   const handleAdd = useCallback(() => {
     if (!newTitle.trim()) return

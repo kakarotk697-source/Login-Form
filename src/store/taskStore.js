@@ -104,30 +104,45 @@ const useTaskStore = create((set, get) => ({
   error: '',
   lastAction: '',
 
-  fetchTasks: async (user) => {
-    if (!user?.id || !user?.email) return
+ fetchTasks: async (user) => {
+  if (!user?.email) return
 
-    set({ isLoading: true, error: '' })
+  set({ isLoading: true, error: '' })
 
-    try {
-      const data = await apiRequest(`/todos/user/${user.id}`)
-      const fetchedTasks = (data.todos || []).map((todo) => toAppTask(todo, user))
-      const tasks = mergeFetchedTasks(get().tasks, fetchedTasks, user.email)
+  try {
+   
+    const safeUserId = ((user.id || 1) % 30) + 1
 
-      persistTasks(tasks)
-      set({
-        tasks,
-        isLoading: false,
-        error: '',
-        lastAction: `GET /todos/user/${user.id}`,
+    const data = await apiRequest(`/todos/user/${safeUserId}`)
+
+    const fetchedTasks = (data.todos || []).map((todo) =>
+      toAppTask(todo, {
+        ...user,
+        id: safeUserId,
       })
-    } catch (error) {
-      set({
-        isLoading: false,
-        error: error.message || 'Could not fetch tasks from the API.',
-      })
-    }
-  },
+    )
+
+    const tasks = mergeFetchedTasks(
+      get().tasks,
+      fetchedTasks,
+      user.email
+    )
+
+    persistTasks(tasks)
+
+    set({
+      tasks,
+      isLoading: false,
+      error: '',
+      lastAction: `GET /todos/user/${safeUserId}`,
+    })
+  } catch (error) {
+    set({
+      isLoading: false,
+      error: error.message || 'Could not fetch tasks from the API.',
+    })
+  }
+},
 
   addTask: async (task) => {
     const tempId = `local-${Date.now()}`
