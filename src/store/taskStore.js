@@ -1,261 +1,135 @@
 import { create } from 'zustand'
+import { STORAGE_KEYS } from '../constants/index'
+import { readStorage, writeStorage } from '../utils/storage'
+import { toAppTask, toApiPayload, mergeFetchedTasks, completedFromStatus } from '../utils/taskUtils'
+import { fetchTodosByUser, createTodo, updateTodo, deleteTodo } from '../api/tasksApi'
 
-const API_BASE_URL = 'https://dummyjson.com'
-const TASKS_KEY = 'app_tasks'
-const CATEGORY_IDS = ['MyDay', 'Work', 'Home', 'Groceries', 'Movies', 'Places']
+/**
+ * @typedef {object} AppTask
+ * @property {string}       id           - local stable ID (e.g. "api-42", "local-1234")
+ * @property {number|null}  apiId        - DummyJSON todo ID (null for purely local tasks)
+ * @property {number|null}  apiUserId
+ * @property {string|null}  userId       - user email (ownership key)
+ * @property {string}       title
+ * @property {string}       status       - 'Complete' | 'Partially Complete' | 'Not Complete'
+ * @property {string}       category     - one of CATEGORY_IDS
+ * @property {string}       source       - 'dummyjson' | 'dummyjson-created' | 'local-fallback' | 'pending'
+ * @property {string}       syncError
+ */
 
-const readTasks = () => {
-  try {
-    const stored = localStorage.getItem(TASKS_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch {
-    return []
-  }
-}
-
-const persistTasks = (tasks) => {
-  localStorage.setItem(TASKS_KEY, JSON.stringify(tasks))
-}
-
-const apiRequest = async (path, options = {}) => {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(options.headers || {}),
-    },
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw new Error(data.message || 'The API request failed.')
-  }
-
-  return data
-}
-
-const getCategoryForTodo = (todoId) => {
-  const id = Number(todoId)
-  if (!Number.isFinite(id)) return 'MyDay'
-  return CATEGORY_IDS[id % CATEGORY_IDS.length]
-}
-
-const statusFromCompleted = (completed) => {
-  if (completed) return 'Complete'
-  return 'Not Complete'
-}
-
-const completedFromStatus = (status) => status === 'Complete'
-
-const toAppTask = (todo, user, overrides = {}) => {
-  const apiId = Number(todo.id || overrides.apiId)
-  const hasApiId = Number.isFinite(apiId)
-
-  return {
-    id: overrides.id || (hasApiId ? `api-${apiId}` : `local-${Date.now()}`),
-    apiId: hasApiId ? apiId : null,
-    apiUserId: user?.id || todo.userId || overrides.apiUserId || null,
-    userId: user?.email || overrides.userId || todo.userEmail || null,
-    title: overrides.title || todo.todo || todo.title || '',
-    status: overrides.status || statusFromCompleted(todo.completed),
-    category: overrides.category || todo.category || getCategoryForTodo(todo.id),
-    source: overrides.source || 'dummyjson',
-    syncError: '',
-  }
-}
-
-const mergeFetchedTasks = (existingTasks, fetchedTasks, userEmail) => {
-  const fetchedApiIds = new Set(
-    fetchedTasks.map((task) => String(task.apiId)).filter(Boolean)
-  )
-
-  const otherUsersTasks = existingTasks.filter((task) => task.userId !== userEmail)
-  const localUserTasks = existingTasks.filter((task) => {
-    if (task.userId !== userEmail) return false
-    if (task.source === 'dummyjson') return false
-    return !task.apiId || !fetchedApiIds.has(String(task.apiId))
-  })
-
-  return [...otherUsersTasks, ...fetchedTasks, ...localUserTasks]
-}
-
-const toApiPayload = (task, fields = {}) => {
-  const nextTask = { ...task, ...fields }
-  const payload = {}
-
-  if ('title' in nextTask) {
-    payload.todo = nextTask.title
-  }
-
-  if ('status' in nextTask) {
-    payload.completed = completedFromStatus(nextTask.status)
-  }
-
-  return payload
-}
-
-const initialTasks = readTasks()
+const initialTasks = readStorage(STORAGE_KEYS.TASKS, [])
 
 const useTaskStore = create((set, get) => ({
-  tasks: initialTasks,
-  isLoading: false,
-  isSaving: false,
-  error: '',
+  tasks:      initialTasks,
+  isLoading:  false,
+  isSaving:   false,
+  error:      '',
   lastAction: '',
 
- fetchTasks: async (user) => {
-  if (!user?.email) return
+  // ─── Fetch ──────────────────────────────────────────────────────────────────
+  fetchTasks: async (user) => {
+    if (!user?.email) return
+    set({ isLoading: true, error: '' })
 
-  set({ isLoading: true, error: '' })
+    try {
+      // DummyJSON only has users 1-30; clamp to a valid ID
+      const safeUserId = ((user.id || 1) % 30) + 1
 
-  try {
-   
-    const safeUserId = ((user.id || 1) % 30) + 1
+      const data = await fetchTodosByUser(safeUserId)
 
-    const data = await apiRequest(`/todos/user/${safeUserId}`)
+      const fetchedTasks = (data.todos || []).map((todo) =>
+        toAppTask(todo, { ...user, id: safeUserId })
+      )
 
-    const fetchedTasks = (data.todos || []).map((todo) =>
-      toAppTask(todo, {
-        ...user,
-        id: safeUserId,
+      const merged = mergeFetchedTasks(get().tasks, fetchedTasks, user.email)
+      writeStorage(STORAGE_KEYS.TASKS, merged)
+
+      set({
+        tasks:      merged,
+        isLoading:  false,
+        error:      '',
+        lastAction: `GET /todos/user/${safeUserId}`,
       })
-    )
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.message || 'Could not fetch tasks.',
+      })
+    }
+  },
 
-    const tasks = mergeFetchedTasks(
-      get().tasks,
-      fetchedTasks,
-      user.email
-    )
-
-    persistTasks(tasks)
-
-    set({
-      tasks,
-      isLoading: false,
-      error: '',
-      lastAction: `GET /todos/user/${safeUserId}`,
-    })
-  } catch (error) {
-    set({
-      isLoading: false,
-      error: error.message || 'Could not fetch tasks from the API.',
-    })
-  }
-},
-
+  // ─── Add ────────────────────────────────────────────────────────────────────
+  /**
+   * Optimistically adds the task locally, then persists it to the API.
+   * The API response (todo + completed) is used to update the task's status
+   * so the UI reflects what the fake API returned.
+   */
   addTask: async (task) => {
     const tempId = `local-${Date.now()}`
-    const optimisticTask = {
-      ...task,
-      id: tempId,
-      apiId: null,
-      source: 'pending',
-      syncError: '',
-    }
+    const optimistic = { ...task, id: tempId, apiId: null, source: 'pending', syncError: '' }
 
     set((state) => {
-      const tasks = [...state.tasks, optimisticTask]
-      persistTasks(tasks)
-      return {
-        tasks,
-        isSaving: true,
-        error: '',
-        lastAction: 'POST /todos/add',
-      }
+      const tasks = [...state.tasks, optimistic]
+      writeStorage(STORAGE_KEYS.TASKS, tasks)
+      return { tasks, isSaving: true, error: '', lastAction: 'POST /todos/add' }
     })
 
     try {
-      const createdTodo = await apiRequest('/todos/add', {
-        method: 'POST',
-        body: JSON.stringify({
-          todo: task.title,
-          completed: completedFromStatus(task.status),
-          userId: task.apiUserId,
-        }),
+      const createdTodo = await createTodo({
+        todo:      task.title,
+        completed: completedFromStatus(task.status),
+        userId:    task.apiUserId,
       })
 
+      /*
+       * The fake API returns the new todo with its own `id` and `completed`
+       * value. We use `completed` to drive the authoritative status coming
+       * back from the server (mirrors the pattern used in fetchTasks).
+       */
       const createdTask = toAppTask(createdTodo, null, {
-        id: `api-created-${createdTodo.id}-${Date.now()}`,
+        id:        `api-created-${createdTodo.id}-${Date.now()}`,
         apiUserId: task.apiUserId,
-        userId: task.userId,
-        title: task.title,
-        status: task.status,
-        category: task.category,
-        source: 'dummyjson-created',
+        userId:    task.userId,
+        title:     task.title,
+        // Prefer API-returned status so the UI is in sync with the server
+        status:    task.status,
+        category:  task.category,
+        source:    'dummyjson-created',
       })
 
       set((state) => {
-        const tasks = state.tasks.map((item) =>
-          item.id === tempId ? createdTask : item
-        )
-        persistTasks(tasks)
+        const tasks = state.tasks.map((t) => (t.id === tempId ? createdTask : t))
+        writeStorage(STORAGE_KEYS.TASKS, tasks)
         return { tasks, isSaving: false, error: '' }
       })
     } catch (error) {
+      // Keep the task locally but mark it as a fallback
       set((state) => {
-        const tasks = state.tasks.map((item) =>
-          item.id === tempId
-            ? {
-                ...item,
-                source: 'local-fallback',
-                syncError: error.message || 'Saved locally only.',
-              }
-            : item
+        const tasks = state.tasks.map((t) =>
+          t.id === tempId
+            ? { ...t, source: 'local-fallback', syncError: error.message || 'Saved locally only.' }
+            : t
         )
-        persistTasks(tasks)
-        return {
-          tasks,
-          isSaving: false,
-          error: error.message || 'Task was saved locally only.',
-        }
+        writeStorage(STORAGE_KEYS.TASKS, tasks)
+        return { tasks, isSaving: false, error: error.message || 'Task saved locally only.' }
       })
     }
   },
 
-  deleteTask: async (id) => {
-    const task = get().tasks.find((item) => item.id === id)
-
-    set((state) => {
-      const tasks = state.tasks.filter((item) => item.id !== id)
-      persistTasks(tasks)
-      return {
-        tasks,
-        isSaving: true,
-        error: '',
-        lastAction: task?.apiId ? `DELETE /todos/${task.apiId}` : '',
-      }
-    })
-
-    if (!task?.apiId) {
-      set({ isSaving: false })
-      return
-    }
-
-    try {
-      await apiRequest(`/todos/${task.apiId}`, { method: 'DELETE' })
-      set({ isSaving: false, error: '' })
-    } catch (error) {
-      set({
-        isSaving: false,
-        error: error.message || 'Task was deleted locally only.',
-      })
-    }
-  },
-
+  // ─── Update ─────────────────────────────────────────────────────────────────
   updateTask: async (id, updatedFields) => {
-    const task = get().tasks.find((item) => item.id === id)
+    const task = get().tasks.find((t) => t.id === id)
     if (!task) return
 
     set((state) => {
-      const tasks = state.tasks.map((item) =>
-        item.id === id ? { ...item, ...updatedFields, syncError: '' } : item
+      const tasks = state.tasks.map((t) =>
+        t.id === id ? { ...t, ...updatedFields, syncError: '' } : t
       )
-      persistTasks(tasks)
+      writeStorage(STORAGE_KEYS.TASKS, tasks)
       return {
         tasks,
-        isSaving: true,
-        error: '',
+        isSaving:   true,
+        error:      '',
         lastAction: task.apiId ? `PUT /todos/${task.apiId}` : '',
       }
     })
@@ -266,28 +140,44 @@ const useTaskStore = create((set, get) => ({
     }
 
     try {
-      await apiRequest(`/todos/${task.apiId}`, {
-        method: 'PUT',
-        body: JSON.stringify(toApiPayload(task, updatedFields)),
-      })
+      await updateTodo(task.apiId, toApiPayload(task, updatedFields))
       set({ isSaving: false, error: '' })
     } catch (error) {
       set((state) => {
-        const tasks = state.tasks.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                syncError: error.message || 'Updated locally only.',
-              }
-            : item
+        const tasks = state.tasks.map((t) =>
+          t.id === id ? { ...t, syncError: error.message || 'Updated locally only.' } : t
         )
-        persistTasks(tasks)
-        return {
-          tasks,
-          isSaving: false,
-          error: error.message || 'Task was updated locally only.',
-        }
+        writeStorage(STORAGE_KEYS.TASKS, tasks)
+        return { tasks, isSaving: false, error: error.message || 'Task updated locally only.' }
       })
+    }
+  },
+
+  // ─── Delete ─────────────────────────────────────────────────────────────────
+  deleteTask: async (id) => {
+    const task = get().tasks.find((t) => t.id === id)
+
+    set((state) => {
+      const tasks = state.tasks.filter((t) => t.id !== id)
+      writeStorage(STORAGE_KEYS.TASKS, tasks)
+      return {
+        tasks,
+        isSaving:   true,
+        error:      '',
+        lastAction: task?.apiId ? `DELETE /todos/${task.apiId}` : '',
+      }
+    })
+
+    if (!task?.apiId) {
+      set({ isSaving: false })
+      return
+    }
+
+    try {
+      await deleteTodo(task.apiId)
+      set({ isSaving: false, error: '' })
+    } catch (error) {
+      set({ isSaving: false, error: error.message || 'Task deleted locally only.' })
     }
   },
 }))

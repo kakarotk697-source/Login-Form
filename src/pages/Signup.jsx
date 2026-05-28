@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import useAuthStore from '../store/authStore'
-import AvatarPicker from '../components/AvatarPicker'
+import AvatarPicker from '../components/avatar/AvatarPicker'
 
 function Signup() {
   const navigate = useNavigate()
   const { signup } = useAuthStore()
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', avatar: null })
-  const [error, setError] = useState('')
+
+  const [formData,     setFormData]     = useState({ name: '', email: '', password: '', avatar: null })
+  const [error,        setError]        = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e) => {
@@ -33,7 +34,7 @@ function Signup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-teal-50 to-emerald-100 p-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
@@ -54,7 +55,9 @@ function Signup() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase text-stone-500 mb-1 ml-1">Your Name</label>
+            <label className="block text-xs font-semibold uppercase text-stone-500 mb-1 ml-1">
+              Your Name
+            </label>
             <input
               type="text"
               placeholder="Alex Mercer"
@@ -64,7 +67,9 @@ function Signup() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-stone-500 mb-1 ml-1">Email Address</label>
+            <label className="block text-xs font-semibold uppercase text-stone-500 mb-1 ml-1">
+              Email Address
+            </label>
             <input
               type="email"
               placeholder="alex@example.com"
@@ -74,7 +79,9 @@ function Signup() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-stone-500 mb-1 ml-1">Password</label>
+            <label className="block text-xs font-semibold uppercase text-stone-500 mb-1 ml-1">
+              Password
+            </label>
             <input
               type="password"
               placeholder="Choose a strong password"
@@ -84,8 +91,12 @@ function Signup() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase text-stone-500 ml-1">Profile Photo (Optional)</label>
-            <AvatarPicker onAvatarSelected={(base64Img) => setFormData({ ...formData, avatar: base64Img })} />
+            <label className="block text-xs font-semibold uppercase text-stone-500 ml-1">
+              Profile Photo (Optional)
+            </label>
+            <AvatarPicker
+              onAvatarSelected={(base64Img) => setFormData({ ...formData, avatar: base64Img })}
+            />
           </div>
 
           <motion.button
@@ -95,7 +106,7 @@ function Signup() {
             disabled={isSubmitting}
             className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3.5 rounded-xl font-medium shadow-md shadow-teal-600/10 transition-all mt-2 text-sm disabled:opacity-70 disabled:cursor-wait"
           >
-            {isSubmitting ? 'Creating Account...' : 'Create Account'}
+            {isSubmitting ? 'Creating Account…' : 'Create Account'}
           </motion.button>
         </form>
 

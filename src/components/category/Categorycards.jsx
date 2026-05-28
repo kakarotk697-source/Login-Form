@@ -1,89 +1,11 @@
 import { useState, useCallback, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import useTaskStore from '../store/taskStore'
-import useAuthStore from '../store/authStore'
-import TaskItem from './TaskItem'
+import { CATEGORIES } from '../../constants/index'
+import useTaskStore from '../../store/taskStore'
+import useAuthStore from '../../store/authStore'
+import TaskItem from '../task/TaskItem'
 
-const CATEGORIES = [
-  {
-    id: 'MyDay',
-    label: 'My Day',
-    icon: '☀️',
-    gradient: 'from-yellow-400/10 to-orange-400/10',
-    accent: 'bg-yellow-400',
-    ring: 'ring-yellow-300',
-    text: 'text-yellow-700',
-    badge: 'bg-yellow-100 text-yellow-700',
-    border: 'border-yellow-100',
-    inputFocus: 'focus:ring-yellow-300',
-    btnBg: 'bg-yellow-500 hover:bg-yellow-600',
-  },
-  {
-    id: 'Work',
-    label: 'Work',
-    icon: '👨‍💻',
-    gradient: 'from-violet-500/10 to-indigo-500/10',
-    accent: 'bg-violet-500',
-    ring: 'ring-violet-300',
-    text: 'text-violet-700',
-    badge: 'bg-violet-100 text-violet-700',
-    border: 'border-violet-100',
-    inputFocus: 'focus:ring-violet-300',
-    btnBg: 'bg-violet-600 hover:bg-violet-700',
-  },
-  {
-    id: 'Home',
-    label: 'Home',
-    icon: '🏠',
-    gradient: 'from-sky-500/10 to-cyan-500/10',
-    accent: 'bg-sky-500',
-    ring: 'ring-sky-300',
-    text: 'text-sky-700',
-    badge: 'bg-sky-100 text-sky-700',
-    border: 'border-sky-100',
-    inputFocus: 'focus:ring-sky-300',
-    btnBg: 'bg-sky-600 hover:bg-sky-700',
-  },
-  {
-    id: 'Groceries',
-    label: 'Groceries',
-    icon: '🍉',
-    gradient: 'from-emerald-500/10 to-teal-500/10',
-    accent: 'bg-emerald-500',
-    ring: 'ring-emerald-300',
-    text: 'text-emerald-700',
-    badge: 'bg-emerald-100 text-emerald-700',
-    border: 'border-emerald-100',
-    inputFocus: 'focus:ring-emerald-300',
-    btnBg: 'bg-emerald-600 hover:bg-emerald-700',
-  },
-  {
-    id: 'Movies',
-    label: 'Movies to watch',
-    icon: '🍿',
-    gradient: 'from-rose-500/10 to-pink-500/10',
-    accent: 'bg-rose-500',
-    ring: 'ring-rose-300',
-    text: 'text-rose-700',
-    badge: 'bg-rose-100 text-rose-700',
-    border: 'border-rose-100',
-    inputFocus: 'focus:ring-rose-300',
-    btnBg: 'bg-rose-600 hover:bg-rose-700',
-  },
-  {
-    id: 'Places',
-    label: 'Places to eat',
-    icon: '🍔',
-    gradient: 'from-amber-500/10 to-orange-500/10',
-    accent: 'bg-amber-500',
-    ring: 'ring-amber-300',
-    text: 'text-amber-700',
-    badge: 'bg-amber-100 text-amber-700',
-    border: 'border-amber-100',
-    inputFocus: 'focus:ring-amber-300',
-    btnBg: 'bg-amber-600 hover:bg-amber-700',
-  },
-]
+//  CategoryModal 
 
 const CategoryModal = memo(function CategoryModal({ cat, tasks, onClose }) {
   const addTask = useTaskStore((s) => s.addTask)
@@ -92,30 +14,21 @@ const CategoryModal = memo(function CategoryModal({ cat, tasks, onClose }) {
   const [newTitle,  setNewTitle]  = useState('')
   const [newStatus, setNewStatus] = useState('Not Complete')
 
- 
-  const complete = tasks.filter(
-  (t) => t.status === 'Complete'
-).length
-
-const partial = tasks.filter(
-  (t) => t.status === 'Partially Complete'
-).length
-
-const progress =
-  tasks.length > 0
-    ? Math.round(
-        ((complete + partial * 0.5) / tasks.length) * 100
-      )
-    : 0
+  const complete = tasks.filter((t) => t.status === 'Complete').length
+  const partial  = tasks.filter((t) => t.status === 'Partially Complete').length
+  const progress =
+    tasks.length > 0
+      ? Math.round(((complete + partial * 0.5) / tasks.length) * 100)
+      : 0
 
   const handleAdd = useCallback(() => {
     if (!newTitle.trim()) return
     addTask({
-      userId: user?.email,
+      userId:    user?.email,
       apiUserId: user?.id,
-      title: newTitle.trim(),
-      status: newStatus,
-      category: cat.id,
+      title:     newTitle.trim(),
+      status:    newStatus,
+      category:  cat.id,
     })
     setNewTitle('')
     setNewStatus('Not Complete')
@@ -191,8 +104,9 @@ const progress =
               aria-label={`New ${cat.label} task`}
               className={`w-full px-3 py-3 text-sm border border-stone-200 rounded-xl outline-none focus:ring-2 ${cat.inputFocus} bg-white text-stone-800 transition-all`}
             />
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
+            <div className="flex flex-col sm:flex-row gap-2 justify-center
+">
+              {/* <select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
                 aria-label="Task status"
@@ -201,7 +115,7 @@ const progress =
                 <option value="Not Complete">Not Complete</option>
                 <option value="Partially Complete">Partially Complete</option>
                 <option value="Complete">Complete</option>
-              </select>
+              </select> */}
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAdd}
@@ -241,18 +155,16 @@ const progress =
         <div className="flex-shrink-0 px-4 md:px-5 py-3 border-t border-stone-100 bg-stone-50/50">
           {tasks.length > 0 && (
             <div className="flex flex-wrap gap-4 text-xs text-stone-500 mb-3">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                {tasks.filter((t) => t.status === 'Complete').length} Complete
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" />
-                {tasks.filter((t) => t.status === 'Partially Complete').length} Partial
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-stone-300" aria-hidden="true" />
-                {tasks.filter((t) => t.status === 'Not Complete').length} Open
-              </span>
+              {[
+                { label: 'Complete', count: complete,                                              dot: 'bg-emerald-500' },
+                { label: 'Partial',  count: partial,                                               dot: 'bg-amber-400'  },
+                { label: 'Open',     count: tasks.filter((t) => t.status === 'Not Complete').length, dot: 'bg-stone-300'  },
+              ].map(({ label, count, dot }) => (
+                <span key={label} className="flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${dot}`} aria-hidden="true" />
+                  {count} {label}
+                </span>
+              ))}
             </div>
           )}
           <button
@@ -267,11 +179,13 @@ const progress =
   )
 })
 
+//  CategoryCard 
+
 const CategoryCard = memo(function CategoryCard({ cat, tasks, index, onOpen }) {
   const complete  = tasks.filter((t) => t.status === 'Complete').length
   const partial   = tasks.filter((t) => t.status === 'Partially Complete').length
   const remaining = tasks.filter((t) => t.status === 'Not Complete').length
-  const progress  = tasks.length > 0 ? Math.round((complete / tasks.length) * 100) : 0
+  const progress  = tasks.length > 0 ? Math.round(((complete + partial * 0.5) / tasks.length) * 100) : 0
 
   const handleClick = useCallback(() => onOpen(cat.id), [cat.id, onOpen])
 
@@ -298,9 +212,9 @@ const CategoryCard = memo(function CategoryCard({ cat, tasks, index, onOpen }) {
 
       <div className="flex items-center gap-3 mb-3 flex-wrap">
         {[
-          { label: 'Done',  count: complete,  dot: 'bg-emerald-500' },
-          { label: 'Part',  count: partial,   dot: 'bg-amber-400'   },
-          { label: 'Open',  count: remaining, dot: 'bg-stone-300'   },
+          { label: 'Done', count: complete,  dot: 'bg-emerald-500' },
+          { label: 'Part', count: partial,   dot: 'bg-amber-400'   },
+          { label: 'Open', count: remaining, dot: 'bg-stone-300'   },
         ].map(({ label, count, dot }) => (
           <span key={label} className="flex items-center gap-1 text-xs text-stone-500">
             <span className={`w-1.5 h-1.5 rounded-full ${dot}`} aria-hidden="true" />
@@ -309,7 +223,13 @@ const CategoryCard = memo(function CategoryCard({ cat, tasks, index, onOpen }) {
         ))}
       </div>
 
-      <div className="h-1 bg-white/50 rounded-full overflow-hidden" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+      <div
+        className="h-1 bg-white/50 rounded-full overflow-hidden"
+        role="progressbar"
+        aria-valuenow={progress}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <motion.div
           className={`h-full ${cat.accent} rounded-full`}
           initial={{ width: 0 }}
@@ -322,9 +242,11 @@ const CategoryCard = memo(function CategoryCard({ cat, tasks, index, onOpen }) {
   )
 })
 
+//  CategoryCards  
+
 function CategoryCards() {
-  const tasks   = useTaskStore((s) => s.tasks)
-  const user    = useAuthStore((s) => s.user)
+  const tasks = useTaskStore((s) => s.tasks)
+  const user  = useAuthStore((s) => s.user)
   const [openCatId, setOpenCatId] = useState(null)
 
   const userTasks   = tasks.filter((t) => t.userId === user?.email)
@@ -355,16 +277,11 @@ function CategoryCards() {
 
       <AnimatePresence>
         {openCatId && activeCat && (
-          <CategoryModal
-            cat={activeCat}
-            tasks={activeTasks}
-            onClose={handleClose}
-          />
+          <CategoryModal cat={activeCat} tasks={activeTasks} onClose={handleClose} />
         )}
       </AnimatePresence>
     </>
   )
 }
 
-export { CATEGORIES }
 export default CategoryCards

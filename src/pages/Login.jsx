@@ -7,65 +7,47 @@ function Login() {
   const navigate = useNavigate()
   const { login } = useAuthStore()
 
-  const [formData, setFormData] = useState({ email: '', password: '' })
-  
-  const [errors, setErrors] = useState({ email: '', password: '', form: '' })
-  
-  const [touched, setTouched] = useState({ email: false, password: false })
+  const [formData,     setFormData]     = useState({ email: '', password: '' })
+  const [errors,       setErrors]       = useState({ email: '', password: '', form: '' })
+  const [touched,      setTouched]      = useState({ email: false, password: false })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const runClientSideValidation = (fieldName, fieldValue) => {
-    let errorMessage = ''
-
-    if (fieldName === 'email') {
-      if (!fieldValue.trim()) {
-        errorMessage = 'Email or username cannot be blank.'
-      } else if (fieldValue.includes('@')) {
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailPattern.test(fieldValue)) {
-          errorMessage = 'Please enter a valid format (e.g., name@domain.com).'
-        }
+  const validate = (field, value) => {
+    let msg = ''
+    if (field === 'email') {
+      if (!value.trim()) {
+        msg = 'Email or username cannot be blank.'
+      } else if (value.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        msg = 'Please enter a valid format (e.g., name@domain.com).'
       }
     }
-
-    if (fieldName === 'password') {
-      if (!fieldValue) {
-        errorMessage = 'Password field is required.'
-      } else if (fieldValue.length < 6) {
-        errorMessage = 'Security requirement: Must be at least 6 characters.'
-      }
+    if (field === 'password') {
+      if (!value)          msg = 'Password field is required.'
+      else if (value.length < 6) msg = 'Must be at least 6 characters.'
     }
-
-    setErrors((prev) => ({ ...prev, [fieldName]: errorMessage, form: '' }))
-    return errorMessage
+    setErrors((prev) => ({ ...prev, [field]: msg, form: '' }))
+    return msg
   }
 
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    
-    if (touched[name]) {
-      runClientSideValidation(name, value)
-    }
+    if (touched[name]) validate(name, value)
   }
 
-  const handleInputBlur = (e) => {
+  const handleBlur = (e) => {
     const { name, value } = e.target
     setTouched((prev) => ({ ...prev, [name]: true }))
-    runClientSideValidation(name, value)
+    validate(name, value)
   }
 
-  const handleFormSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-
     setTouched({ email: true, password: true })
 
-    const emailErrorResult = runClientSideValidation('email', formData.email)
-    const passwordErrorResult = runClientSideValidation('password', formData.password)
-
-    if (emailErrorResult || passwordErrorResult) {
-      return
-    }
+    const emailErr    = validate('email',    formData.email)
+    const passwordErr = validate('password', formData.password)
+    if (emailErr || passwordErr) return
 
     setIsSubmitting(true)
     const result = await login(formData.email, formData.password)
@@ -76,14 +58,14 @@ function Login() {
     } else {
       setErrors((prev) => ({
         ...prev,
-        form: result.message || 'The email/username or password you entered matches no registered records.',
+        form: result.message || 'Email/username or password did not match any records.',
       }))
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-100 p-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -93,12 +75,12 @@ function Login() {
           Welcome Back
         </h1>
         <p className="text-center text-stone-500 mb-6 text-sm">
-          Please enter your credentials to manage your tasks.
+          Enter your credentials to manage your tasks.
         </p>
 
         <AnimatePresence>
           {errors.form && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -109,8 +91,8 @@ function Login() {
           )}
         </AnimatePresence>
 
-        <form onSubmit={handleFormSubmit} className="space-y-4" noValidate>
-          
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          {/* Email */}
           <div className="flex flex-col">
             <label className="text-xs font-bold uppercase text-stone-500 mb-1.5 ml-1 tracking-wider">
               Email or Username
@@ -120,11 +102,11 @@ function Login() {
               name="email"
               value={formData.email}
               placeholder="emily.johnson@x.dummyjson.com"
-              onChange={handleInputChange}
-              onBlur={handleInputBlur}
+              onChange={handleChange}
+              onBlur={handleBlur}
               className={`w-full p-3.5 rounded-xl bg-stone-50/50 border outline-none transition-all text-sm text-stone-800 ${
-                touched.email && errors.email 
-                  ? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/10' 
+                touched.email && errors.email
+                  ? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/10'
                   : 'border-stone-200 focus:ring-2 focus:ring-emerald-400'
               }`}
             />
@@ -142,6 +124,7 @@ function Login() {
             </AnimatePresence>
           </div>
 
+          {/* Password */}
           <div className="flex flex-col">
             <label className="text-xs font-bold uppercase text-stone-500 mb-1.5 ml-1 tracking-wider">
               Password
@@ -151,11 +134,11 @@ function Login() {
               name="password"
               value={formData.password}
               placeholder="••••••••"
-              onChange={handleInputChange}
-              onBlur={handleInputBlur}
+              onChange={handleChange}
+              onBlur={handleBlur}
               className={`w-full p-3.5 rounded-xl bg-stone-50/50 border outline-none transition-all text-sm text-stone-800 ${
-                touched.password && errors.password 
-                  ? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/10' 
+                touched.password && errors.password
+                  ? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/10'
                   : 'border-stone-200 focus:ring-2 focus:ring-emerald-400'
               }`}
             />
@@ -176,9 +159,9 @@ function Login() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-semibold shadow-sm transition-all transform active:scale-[0.99] mt-4 text-sm disabled:opacity-70 disabled:cursor-wait"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-semibold shadow-sm transition-all active:scale-[0.99] mt-4 text-sm disabled:opacity-70 disabled:cursor-wait"
           >
-            {isSubmitting ? 'Signing In...' : 'Sign In'}
+            {isSubmitting ? 'Signing In…' : 'Sign In'}
           </button>
         </form>
 

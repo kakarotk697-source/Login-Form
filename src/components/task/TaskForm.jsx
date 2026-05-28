@@ -1,50 +1,59 @@
 import { useState, useCallback, useEffect } from 'react'
-import useTaskStore from '../store/taskStore'
-import useAuthStore from '../store/authStore'
 import { motion } from 'framer-motion'
+import useTaskStore from '../../store/taskStore'
+import useAuthStore from '../../store/authStore'
+
 
 function TaskForm({ currentCategory }) {
   const addTask = useTaskStore((s) => s.addTask)
   const user    = useAuthStore((s) => s.user)
 
-  const [task,     setTask]     = useState('')
+  const [title,    setTitle]    = useState('')
   const [status,   setStatus]   = useState('Not Complete')
   const [category, setCategory] = useState(currentCategory || 'MyDay')
 
-  // Sync category when prop changes (e.g. user switches filter)
+  const isAllView = currentCategory === 'All'
+
   useEffect(() => {
     if (currentCategory && currentCategory !== 'All') {
       setCategory(currentCategory)
     }
   }, [currentCategory])
 
-  const handleSubmit = useCallback((e) => {
-    e.preventDefault()
-    if (!task.trim()) return
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault()
+      if (!title.trim()) return
 
-    addTask({
-      userId: user?.email,
-      apiUserId: user?.id,
-      title: task.trim(),
-      status,
-      category: currentCategory === 'All' || currentCategory === 'MyDay' ? category : currentCategory,
-    })
+      addTask({
+        userId:    user?.email,
+        apiUserId: user?.id,
+        title:     title.trim(),
+        status,
+        category:  isAllView ? category : currentCategory,
+      })
 
-    setTask('')
-    setStatus('Not Complete')
-  }, [task, status, category, currentCategory, user?.email, user?.id, addTask])
-
-  const isAllView = currentCategory === 'All'
+      setTitle('')
+      setStatus('Not Complete')
+    },
+    [title, status, category, currentCategory, isAllView, user?.email, user?.id, addTask]
+  )
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-5 rounded-2xl border border-stone-100 shadow-xs mb-8">
-      <h3 className="text-stone-700 font-bold mb-3 text-xs tracking-wide uppercase">Add New Entry</h3>
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white p-5 rounded-2xl border border-stone-100 shadow-xs mb-8"
+    >
+      <h3 className="text-stone-700 font-bold mb-3 text-xs tracking-wide uppercase">
+        Add New Entry
+      </h3>
+
       <div className="flex flex-col lg:flex-row gap-3">
         <input
           type="text"
           placeholder="What are you working on today?"
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           aria-label="New task title"
           className="flex-1 p-3 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-300 transition-all text-stone-800 text-sm"
         />

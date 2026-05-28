@@ -1,34 +1,26 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import useAuthStore from '../store/authStore'
 import useTaskStore from '../store/taskStore'
-import Navbar from '../components/Navbar'
-import TaskForm from '../components/TaskForm'
-import TaskItem from '../components/TaskItem'
-import CategoryNav from '../components/CategoryNav'
-import CategoryCards from '../components/CategoryCards'
-import { AnimatePresence, motion } from 'framer-motion'
-
-const CATEGORIES = [
-  { id: 'All',        label: 'All Tasks',         icon: '☀️'  },
-  { id: 'MyDay',      label: 'My Day',            icon: '🌤️' },
-  { id: 'Work',       label: 'Work',              icon: '👨‍💻' },
-  { id: 'Home',       label: 'Home',              icon: '🏠'  },
-  { id: 'Groceries',  label: 'Groceries',         icon: '🍉'  },
-  { id: 'Movies',     label: 'Movies to watch',   icon: '🍿'  },
-  { id: 'Places',     label: 'Places to eat',     icon: '🍔'  },
-]
+import { NAV_CATEGORIES } from '../constants/index'
+import Navbar from '../components/layout/Navbar'
+import CategoryNav from '../components/category/CategoryNav'
+import CategoryCards from '../components/category/CategoryCards'
+import TaskForm from '../components/task/TaskForm'
+import TaskItem from '../components/task/TaskItem'
 
 function Home() {
-  const user  = useAuthStore((s) => s.user)
-  const tasks = useTaskStore((s) => s.tasks)
-  const fetchTasks = useTaskStore((s) => s.fetchTasks)
+  const user           = useAuthStore((s) => s.user)
+  const tasks          = useTaskStore((s) => s.tasks)
+  const fetchTasks     = useTaskStore((s) => s.fetchTasks)
   const isLoadingTasks = useTaskStore((s) => s.isLoading)
-  const isSavingTasks = useTaskStore((s) => s.isSaving)
-  const taskError = useTaskStore((s) => s.error)
+  const isSavingTasks  = useTaskStore((s) => s.isSaving)
+  const taskError      = useTaskStore((s) => s.error)
 
-  const [selectedCategory,  setSelectedCategory]  = useState('All')
-  const [isMobileMenuOpen,  setIsMobileMenuOpen]  = useState(false)
-  const userId = user?.id
+  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const userId    = user?.id
   const userEmail = user?.email
 
   useEffect(() => {
@@ -38,29 +30,34 @@ function Home() {
   }, [fetchTasks, userId, userEmail])
 
   const userTasks = useMemo(
-    () => tasks.filter((t) => t.userId === user?.email),
-    [tasks, user?.email]
+    () => tasks.filter((t) => t.userId === userEmail),
+    [tasks, userEmail]
   )
 
-  const filteredTasks = useMemo(() => {
-    if (selectedCategory === 'All') return userTasks
-    return userTasks.filter((t) => t.category === selectedCategory)
-  }, [userTasks, selectedCategory])
+  const filteredTasks = useMemo(
+    () =>
+      selectedCategory === 'All'
+        ? userTasks
+        : userTasks.filter((t) => t.category === selectedCategory),
+    [userTasks, selectedCategory]
+  )
 
   const totalTasks     = userTasks.length
-  const completedCount = useMemo(() => userTasks.filter((t) => t.status === 'Complete').length,           [userTasks])
-  const partialCount   = useMemo(() => userTasks.filter((t) => t.status === 'Partially Complete').length, [userTasks])
-  const pendingCount   = useMemo(() => userTasks.filter((t) => t.status === 'Not Complete').length,       [userTasks])
+  const completedCount = useMemo(() => userTasks.filter((t) => t.status === 'Complete').length,            [userTasks])
+  const partialCount   = useMemo(() => userTasks.filter((t) => t.status === 'Partially Complete').length,  [userTasks])
+  const pendingCount   = useMemo(() => userTasks.filter((t) => t.status === 'Not Complete').length,        [userTasks])
 
-  const getCategoryCount = useCallback((catId) => {
-    if (catId === 'All') return userTasks.length
-    return userTasks.filter((t) => t.category === catId).length
-  }, [userTasks])
+  const getCategoryCount = useCallback(
+    (catId) =>
+      catId === 'All'
+        ? userTasks.length
+        : userTasks.filter((t) => t.category === catId).length,
+    [userTasks]
+  )
 
   const toggleMobileMenu = useCallback(() => setIsMobileMenuOpen((v) => !v), [])
 
-  const currentLabel = CATEGORIES.find((c) => c.id === selectedCategory)?.label
-
+  const currentLabel     = NAV_CATEGORIES.find((c) => c.id === selectedCategory)?.label
   const taskFormCategory = selectedCategory === 'All' ? 'MyDay' : selectedCategory
 
   return (
@@ -85,6 +82,7 @@ function Home() {
           />
         </div>
 
+        
         {(isLoadingTasks || isSavingTasks || taskError) && (
           <div
             className={`mb-5 rounded-xl border px-4 py-3 text-sm font-medium ${
@@ -93,11 +91,11 @@ function Home() {
                 : 'border-emerald-100 bg-emerald-50 text-emerald-700'
             }`}
           >
-            {taskError || (isLoadingTasks ? 'Loading your synced tasks...' : 'Saving changes...')}
+            {taskError || (isLoadingTasks ? 'Loading your synced tasks…' : 'Saving changes…')}
           </div>
         )}
 
-        {/* Stats */}
+        {/* States */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Total Tasks', value: totalTasks,     color: 'text-stone-800',   accent: 'text-stone-400'   },
@@ -112,7 +110,7 @@ function Home() {
           ))}
         </div>
 
-        {/* Category Cards — desktop only */}
+        {/* Category cards — desktop only */}
         <div className="hidden md:block mb-2">
           <h3 className="text-stone-700 font-bold text-xs tracking-wide uppercase mb-4 px-1">
             Categories
@@ -138,7 +136,7 @@ function Home() {
               layout
               className="text-center py-12 bg-white rounded-2xl border border-dashed border-stone-200 text-stone-400 text-sm shadow-2xs"
             >
-              ✨ No entries logged inside this bucket. Time to relax or schedule a clean task!
+              ✨ No entries logged. Time to relax or schedule a clean task!
             </motion.div>
           ) : (
             <div className="flex flex-col gap-2.5">

@@ -1,34 +1,25 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 
-function AvatarPicker({ 
-  onAvatarSelected,
-  onSizeChange, 
-  initialImage = null,
-  name,
-  email
-}) {
-  const [rawImage, setRawImage] = useState(initialImage)
-  const [selectedSize, setSelectedSize] = useState('medium')
+
+function AvatarPicker({ onAvatarSelected, onSizeChange, initialImage = null, name, email }) {
+  const [rawImage,      setRawImage]      = useState(initialImage)
+  const [selectedSize,  setSelectedSize]  = useState('medium')
   const fileInputRef = useRef(null)
 
   const sizeClasses = {
-    small: 'w-8 h-8 sm:w-10 sm:h-10',
+    small:  'w-8 h-8 sm:w-10 sm:h-10',
     medium: 'w-12 h-12 sm:w-14 sm:h-14',
-    large: 'w-16 h-16 sm:w-20 sm:h-20'
+    large:  'w-16 h-16 sm:w-20 sm:h-20',
   }
 
   useEffect(() => {
-    if (onSizeChange) {
-      onSizeChange(selectedSize)
-    }
-  }, [])
+    onSizeChange?.(selectedSize)
+  }, []) 
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size)
-    if (onSizeChange) {
-      onSizeChange(size)
-    }
+    onSizeChange?.(size)
   }
 
   const handleFileChange = (e) => {
@@ -39,26 +30,23 @@ function AvatarPicker({
     reader.onload = (event) => {
       const img = new Image()
       img.onload = () => {
-        const canvas = document.createElement('canvas')
+        const canvas    = document.createElement('canvas')
         const MAX_WIDTH = 400
-
-        let width = img.width
+        let width  = img.width
         let height = img.height
 
         if (width > MAX_WIDTH) {
           height = Math.round((height * MAX_WIDTH) / width)
-          width = MAX_WIDTH
+          width  = MAX_WIDTH
         }
 
-        canvas.width = width
+        canvas.width  = width
         canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
 
-        const ctx = canvas.getContext('2d')
-        ctx.drawImage(img, 0, 0, width, height)
-
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75)
-        setRawImage(compressedDataUrl)
-        onAvatarSelected(compressedDataUrl)
+        const compressed = canvas.toDataURL('image/jpeg', 0.75)
+        setRawImage(compressed)
+        onAvatarSelected(compressed)
       }
       img.src = event.target.result
     }
@@ -85,8 +73,7 @@ function AvatarPicker({
           >
             {name?.charAt(0) || '?'}
           </motion.div>
-          
-          <motion.span 
+          <motion.span
             onClick={() => fileInputRef.current.click()}
             className="text-xs font-bold text-emerald-600 tracking-wide mt-3 cursor-pointer bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100/60 transition-all hover:bg-emerald-100/50"
           >
@@ -125,7 +112,6 @@ function AvatarPicker({
         </div>
       )}
 
-      {/* Responsive Preview */}
       {rawImage && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -135,23 +121,15 @@ function AvatarPicker({
           <div
             className={`${sizeClasses[selectedSize]} rounded-full overflow-hidden bg-stone-100 border-2 border-emerald-500/20 flex-shrink-0 transition-all duration-300`}
           >
-            <img
-              src={rawImage}
-              alt="Avatar Preview"
-              className="w-full h-full object-cover"
-            />
+            <img src={rawImage} alt="Avatar Preview" className="w-full h-full object-cover" />
           </div>
 
           <div className="overflow-hidden min-w-0">
             <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-0.5">
               Live Preview Card
             </p>
-            <p className="font-semibold text-stone-800 text-sm truncate">
-              {name || 'Display Name'}
-            </p>
-            <p className="text-xs text-stone-400 truncate">
-              {email || 'user@domain.com'}
-            </p>
+            <p className="font-semibold text-stone-800 text-sm truncate">{name || 'Display Name'}</p>
+            <p className="text-xs text-stone-400 truncate">{email || 'user@domain.com'}</p>
           </div>
         </motion.div>
       )}
